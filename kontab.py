@@ -4,21 +4,36 @@ import sqlite3
 import csv
 import argparse
 
-conn = sqlite3.connect('kontab.db')
+# local modules
+import config
+from utils import get_table_list, delete_table
+
+
+
+DB_PATH='kontab.db'
+
+if os.path.isfile(DB_PATH):
+    print("c'est un fichier")
+else:
+    print("la db n'existe pas, créez un fichier kontab.db")
+
+conn = sqlite3.connect(DB_PATH)
+
 
 def supprimer_tables():
     cursor = conn.cursor()
+    table_list = get_table_list(cursor)
 
-    cursor.execute("""
-    DROP TABLE categories
-    """)
+    if 'categories' in table_list:
+        print("bouh categorie existe")
+        delete_table(cursor, 'categories')
 
-    cursor.execute("""
-    DROP TABLE cerveau
-    """)
-    cursor.execute("""
-    DROP TABLE comptes
-    """)
+    if 'cerveau' in table_list:
+        delete_table(cursor, 'cerveau')
+    
+    if 'comptes' in table_list:
+        delete_table(cursor, 'comptes') 
+    
     conn.commit()
     print('Tables supprimées')
 
