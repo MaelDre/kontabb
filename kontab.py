@@ -6,9 +6,7 @@ import argparse
 
 # local modules
 import config
-from utils import get_table_list, delete_table
-
-
+from utils import get_table_list, delete_table, delete_all_tables
 
 DB_PATH='kontab.db'
 
@@ -20,26 +18,10 @@ else:
 conn = sqlite3.connect(DB_PATH)
 
 
-def supprimer_tables():
-    cursor = conn.cursor()
-    table_list = get_table_list(cursor)
-
-    if 'categories' in table_list:
-        print("bouh categorie existe")
-        delete_table(cursor, 'categories')
-
-    if 'cerveau' in table_list:
-        delete_table(cursor, 'cerveau')
-    
-    if 'comptes' in table_list:
-        delete_table(cursor, 'comptes') 
-    
-    conn.commit()
-    print('Tables supprimées')
-
 def init_db():
-    supprimer_tables()
     cursor = conn.cursor()
+    delete_all_tables(cursor)
+    
     #Creation de la table categories
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS categories(
@@ -71,6 +53,7 @@ def init_db():
     )
     """)
     conn.commit()
+    get_table_list(cursor)
     print('Tables crées')
 
 def remplir_donnees_test():
@@ -113,6 +96,7 @@ def remplir_donnees_test():
     INSERT INTO cerveau (libelle, categorie) VALUES(?, ?)
     """, ("LAURENCE F. VINCENNES", "coiffeur"))
 
+    get_table_list(cursor)
     conn.commit()
     print("Table cerveau initialisée")
 

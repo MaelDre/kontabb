@@ -18,4 +18,12 @@ def get_table_list(cursor):
 def delete_table(cursor, table):
     # suppression de la table
     cursor.execute("DROP TABLE " +table+"")
-    print ("table ", table, " supprimée")
+    print ("table ", table, "supprimée")
+
+def delete_all_tables(cursor):
+    table_list = get_table_list(cursor)
+
+    for table in table_list:
+        delete_table(cursor, table)
+    
+    print('Tables supprimées')
