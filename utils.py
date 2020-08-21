@@ -25,5 +25,22 @@ def delete_all_tables(cursor):
 
     for table in table_list:
         delete_table(cursor, table)
-    
     print('Tables supprimées')
+
+def show_table(cursor, table):
+    cursor.execute("SELECT * from "+table+"")
+    for line in cursor.fetchall():
+        print(line)
+
+def clean_table(cursor, table):
+    cursor.execute("DELETE FROM " +table+"")
+    print ("table ", table, "vidée")
+
+def clean_all_tables(cursor):
+    table_list = get_table_list(cursor)
+    for table in table_list:
+        clean_table(cursor, table)
+
+
+
+    

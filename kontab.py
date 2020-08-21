@@ -6,9 +6,18 @@ import argparse
 
 # local modules
 import config
-from utils import get_table_list, delete_table, delete_all_tables
+from utils import get_table_list, delete_table, delete_all_tables, show_table, clean_table, clean_all_tables
+from model.model import Category, Operation
 
+# CONFIG
 DB_PATH='kontab.db'
+INPUT_BRAIN_FILE='input_cerveau.csv'
+INPUT_STATEMENT_FILE='comptes_mois_N.csv'
+INPUT_CATEGORY_FILE='categories_mois_N.csv'
+OUTPUT_STATEMENT_FILE='resultat_comptes_mois_N.csv'
+OUTPUT_CATEGORY_FILE='backup_catergoy.csv'
+OUTPUT_BRAIN_FILE='backup_brain.csv'
+#####################################################
 
 if os.path.isfile(DB_PATH):
     print("c'est un fichier")
@@ -17,11 +26,10 @@ else:
 
 conn = sqlite3.connect(DB_PATH)
 
-
 def init_db():
     cursor = conn.cursor()
     delete_all_tables(cursor)
-    
+
     #Creation de la table categories
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS categories(
@@ -58,6 +66,7 @@ def init_db():
 
 def remplir_donnees_test():
     cursor = conn.cursor()
+
 
     #Insertion des catégories
     cursor.execute("""
@@ -100,55 +109,29 @@ def remplir_donnees_test():
     conn.commit()
     print("Table cerveau initialisée")
 
-
 def vider_tables():
     cursor = conn.cursor()
 
-    #On vide la table categories
-    cursor.execute("""
-    DELETE FROM categories
-    """)
-
-    #On vide la table comptes
-    cursor.execute("""
-    DELETE FROM comptes
-    """)
-
-    #On vide la table cerveau
-    cursor.execute("""
-    DELETE FROM cerveau
-    """)
+    clean_all_tables(cursor)
 
     conn.commit()
-    print('les tables on été vidées')
+    print('Tables vidées')
 
-def liste_categories():
+def show_categories():
     print('liste des categories en base:')
     cursor = conn.cursor()
-    cursor.execute("""
-    SELECT * from categories
-    """)
-    for categ in cursor.fetchall():
-        print(categ)
+    show_table(cursor, 'categories')
 
-def liste_ecritures():
+def show_comptes():
     print('liste des écritures dans compte:')
     cursor = conn.cursor()
-    cursor.execute("""
-    SELECT * from comptes
-    """)
-    for ecriture in cursor.fetchall():
-        print(ecriture)
+    show_table(cursor, 'comptes')
 
-def liste_cerveau():
+def show_cerveau():
     print('contenu de cerveau:')
     cursor = conn.cursor()
-    cursor.execute("""
-    SELECT * from cerveau
-    """)
-    for souvenir in cursor.fetchall():
-        print(souvenir)
-
+    show_table(cursor, 'cerveau')
+    
 def charger_comptes(fichier):
     # liste_lignes[]
     file = open(fichier, 'r')
@@ -366,11 +349,6 @@ def parser_compte_manuel():
 def main():
     # Configuration des arguments et mode
     parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        'file',
-        help='ce fichier sera chargé dans le programme',
-        type=str)
     
     parser.add_argument(
         '--init',
@@ -460,36 +438,35 @@ def main():
 
     args = parser.parse_args()
 
-    fichier = args.file
     if args.init:
         init_db()
     
     if args.showcomptes:
-        liste_ecritures()
+        show_comptes()
     
     if args.showcategories:
-        liste_categories()
+        show_categories()
     
     if args.showcerveau:
-        liste_cerveau()
+        show_cerveau()
     
     if args.loadcategories:
-        charger_categories(fichier)
+        charger_categories(INPUT_CATEGORY_FILE)
 
     if args.loadcomptes:
-        charger_comptes(fichier)
+        charger_comptes(INPUT_STATEMENT_FILE)
     
     if args.loadcerveau:
-        charger_cerveau(fichier)
+        charger_cerveau(INPUT_BRAIN_FILE)
 
     if args.savecompte:
-        sauvegarder_comptes(fichier)
+        sauvegarder_comptes(OUTPUT_STATEMENT_FILE)
     
     if args.savecategories:
-        sauvegarder_categories(fichier)
+        sauvegarder_categories(OUTPUT_CATEGORY_FILE)
 
     if args.savecerveau:
-        sauvegarder_cerveau(fichier)
+        sauvegarder_cerveau(OUTPUT_BRAIN_FILE)
 
     if args.parser:
         parser_comptes()
