@@ -9,20 +9,41 @@ from config import Glob
 from utils import get_table_list, delete_table, delete_all_tables, show_table, clean_table, clean_all_tables
 from model.model import Category, Operation
 
-# CONFIG
-#DB_PATH='kontab.db'
-#INPUT_BRAIN_FILE='input_cerveau.csv'
-#INPUT_STATEMENT_FILE='comptes_mois_N.csv'
-#INPUT_CATEGORY_FILE='categories_mois_N.csv'
-#OUTPUT_STATEMENT_FILE='resultat_comptes_mois_N.csv'
-#OUTPUT_CATEGORY_FILE='backup_catergoy.csv'
-#OUTPUT_BRAIN_FILE='backup_brain.csv'
-#####################################################
-
 class DB_Management:
+    # Constructeur
     def __init__(self, path):
-        #Constructeur
-        self.conn = sqlite3.connect(path)
+        try:
+            self.conn = sqlite3.connect(path)
+        except Exception:
+            print('Error detected, impossible to connect to the database sorry')
+            self.echec=1
+        else:
+            self.cursor = self.conn.cursor()
+            self.echec=0
+    
+    def createTables(self, dicTables):
+        # On va parcourir les tables du dictable
+        for table in dicTables:
+            req = "CREATE TABLE IF NOT EXISTS %s (" % table
+            pk =''
+            for descr in dicTables[table]:
+                nomChamp = descr[0]     # libellé du champ à créer
+                tch = descr[1]          # type de champ à créer
+                if tch =='f':           # champ FLOAT
+                    typeChamp = 'FLOAT'
+                elif tch =='k':         # champ primary key              
+                    typeChamp = 'INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE'
+                    pk = nomChamp
+                else:                   # champ TEXT
+                    typeChamp = 'TEXT'
+                req = req + nomChamp + ' ' + typeChamp +','
+            req = req[:-1] + ')'
+            # la requete devrait être ok
+            print(req)
+            self.cursor.execute(req)
+        
+            
+        
 
 
 
@@ -35,49 +56,52 @@ class DB_Management:
 #conn = sqlite3.connect(Glob.DB_PATH)
 db = DB_Management(Glob.DB_PATH)
 conn = db.conn
+cursor = db.cursor
 
 def init_db():
-    cursor = conn.cursor()
+    #cursor = conn.cursor()
+    #cursor = curs
     delete_all_tables(cursor)
+    db.createTables(Glob.dicoT)
+
 
     #Creation de la table categories
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS categories(
-        id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
-        nom TEXT,
-        categ_parent TEXT
-    )
-    """)
+    # cursor.execute("""
+    # CREATE TABLE IF NOT EXISTS categories(
+    #     id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
+    #     nom TEXT,
+    #     categ_parent TEXT
+    # )
+    # """)
 
     #Creation table cerveau
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS cerveau(
-        id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
-        libelle TEXT,
-        categorie TEXT
-    )
-    """)
+    # cursor.execute("""
+    # CREATE TABLE IF NOT EXISTS cerveau(
+    #     id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
+    #     libelle TEXT,
+    #     categorie TEXT
+    # )
+    # """)
 
     #Creation de la table compte
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS comptes(
-        id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
-        date_operation TEXT,
-        date_valeur TEXT,
-        libelle TEXT,
-        montant_credit FLOAT,
-        montant_debit FLOAT,
-        categorie TEXT
-    )
-    """)
+    # cursor.execute("""
+    # CREATE TABLE IF NOT EXISTS comptes(
+    #     id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
+    #     date_operation TEXT,
+    #     date_valeur TEXT,
+    #     libelle TEXT,
+    #     montant_credit FLOAT,
+    #     montant_debit FLOAT,
+    #     categorie TEXT
+    # )
+    # """)
+
+
     conn.commit()
     get_table_list(cursor)
     print('Tables crées')
 
 def remplir_donnees_test():
-    cursor = conn.cursor()
-
-
     #Insertion des catégories
     cursor.execute("""
     INSERT into categories (nom, categ_parent) VALUES(?,?)
@@ -120,15 +144,12 @@ def remplir_donnees_test():
     print("Table cerveau initialisée")
 
 def vider_tables():
-    cursor = conn.cursor()
-
     clean_all_tables(cursor)
 
     conn.commit()
     print('Tables vidées')
     
 def charger_comptes(fichier):
-    cursor = conn.cursor()
     # liste_lignes[]
     file = open(fichier, 'r')
     reader = csv.DictReader(file, delimiter=";")
@@ -151,7 +172,6 @@ def charger_comptes(fichier):
     show_table(cursor,'comptes')
 
 def charger_categories(fichier):
-    cursor = conn.cursor()
     file = open(fichier,'r')
     reader = csv.DictReader(file, delimiter=";")
     for row in reader:
@@ -165,7 +185,7 @@ def charger_categories(fichier):
     show_table(cursor,'categories')
 
 def charger_cerveau(fichier):
-    cursor = conn.cursor()
+    #cursor = conn.cursor()
     # liste_lignes[]
     file = open(fichier, 'r')
     reader = csv.DictReader(file, delimiter=";")
@@ -188,7 +208,7 @@ def sauvegarder_categories(fichier):
     #f_csv.writerow(en_tetes)
     f_csv.writerow( ('Id','Catégorie','Catégorie parent'))
     
-    cursor = conn.cursor()
+    #cursor = conn.cursor()
     cursor.execute("""
     SELECT * from categories
     """)
@@ -202,7 +222,7 @@ def sauvegarder_cerveau(fichier):
     #f_csv.writerow(en_tetes)
     f_csv.writerow( ('Id','Libéllés','Catégorie'))
     
-    cursor = conn.cursor()
+    #cursor = conn.cursor()
     cursor.execute("""
     SELECT * from cerveau
     """)
@@ -218,7 +238,7 @@ def sauvegarder_comptes(fichier):
     #f_csv.writerow(en_tetes)
     f_csv.writerow( ('Id','Date operation','Date valeur','Libelle','Debit','Credit','Categorie'))
     
-    cursor = conn.cursor()
+    #cursor = conn.cursor()
     cursor.execute("""
     SELECT * from comptes
     """)
@@ -228,7 +248,7 @@ def sauvegarder_comptes(fichier):
 
 def rechercher_cerveau(libelle):
     # On va parcourir toute la table cerveau 
-    cursor = conn.cursor()
+    #cursor = conn.cursor()
     cursor.execute("""
     SELECT * FROM cerveau
     """
@@ -246,9 +266,7 @@ def rechercher_cerveau(libelle):
     # si on a rien trouver on renvoie result
     return result
 
-def rechercher_categorie(categ):
-    cursor = conn.cursor()
-    
+def rechercher_categorie(categ):    
     cursor.execute("""
     SELECT * FROM categories where nom=?
     """, (categ,)
@@ -263,7 +281,7 @@ def rechercher_categorie(categ):
 
 def verifier_categories_cerveau():
     # On va parcourir toute la table cerveau 
-    cursor = conn.cursor()
+    #cursor = conn.cursor()
     cursor.execute("""
     SELECT * FROM cerveau
     """
@@ -277,7 +295,7 @@ def verifier_categories_cerveau():
     
 def is_a_category(categ):
     # returns true if categ is present in CATEGORIES table
-    cursor = conn.cursor()
+    #cursor = conn.cursor()
     cursor.execute("""
     SELECT * FROM categories where nom=?
     """, (categ,)
@@ -289,7 +307,7 @@ def is_a_category(categ):
         return False
 
 def assigner_categorie(id, categorie):
-    cursor = conn.cursor()
+    #cursor = conn.cursor()
     cursor.execute("""
     UPDATE comptes SET categorie = ? WHERE id = ?
     """, (categorie, id)
@@ -297,7 +315,7 @@ def assigner_categorie(id, categorie):
     conn.commit()
 
 def assigner_souvenir(libelle, categorie):
-    cursor = conn.cursor()
+    #cursor = conn.cursor()
     cursor.execute("""
     INSERT INTO cerveau (libelle, categorie) VALUES(?, ?)
     """, (libelle, categorie)
@@ -306,7 +324,7 @@ def assigner_souvenir(libelle, categorie):
 
 def parser_comptes():
     print('On va parcourir compte et checker si ya des choses dans cerveau:')
-    cursor = conn.cursor()
+    #cursor = conn.cursor()
     cursor.execute("""
     SELECT * from comptes
     """)
@@ -327,7 +345,7 @@ def parser_comptes():
         #    print('retrouvé')
 
 def parser_compte_manuel():
-    cursor = conn.cursor()
+    #cursor = conn.cursor()
     cursor.execute("""
     SELECT * from comptes
     """)
@@ -343,6 +361,24 @@ def parser_compte_manuel():
                 categ = input('ok, entrez une categorie parmi les categories existante: ')
                 if is_a_category(categ):
                     assigner_categorie(id, categ)
+
+def fullauto_parser():
+    print('## Full automatic mode ##')
+    
+    print('## 1. Clean the database ##')
+    init_db()
+
+    print('## 2. Fill the database with Cerveau, Categories & Comptes data ##')
+    charger_cerveau(Glob.INPUT_BRAIN_FILE)
+    charger_categories(Glob.INPUT_CATEGORY_FILE)
+    charger_comptes(Glob.INPUT_STATEMENT_FILE)
+
+    print('## 3. Launch the parser ##')
+    parser_comptes()
+
+    print('## 4. Backup the parsed data ##')
+    sauvegarder_comptes(Glob.OUTPUT_STATEMENT_FILE)
+
 
 def main():
     print('Welcome in Kontabb')
@@ -436,6 +472,12 @@ def main():
         help='avec cet argument on parse manuellement les écritures',
         action='store_true'
     )
+    parser.add_argument(
+        '--fullautoparser',
+        default=False,
+        help='avec cet argument on initialise la base, on la charge avec les fichiers de configuration, on lance le parsing auto, et on sauvegarde le résultat',
+        action='store_true'
+    )
 
     args = parser.parse_args()
 
@@ -477,6 +519,9 @@ def main():
     
     if args.vidertables:
         vider_tables()
+    
+    if args.fullautoparser:
+        fullauto_parser()
 
     # appels pour test
     #charger_categories()
