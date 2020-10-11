@@ -19,22 +19,12 @@ from model.model import Category, Operation
 #OUTPUT_BRAIN_FILE='backup_brain.csv'
 #####################################################
 
-class DB_Management:
-    def __init__(self, path):
-        #Constructeur
-        self.conn = sqlite3.connect(path)
+if os.path.isfile(Glob.DB_PATH):
+    print("c'est un fichier")
+else:
+    print("la db n'existe pas, créez un fichier kontab.db")
 
-
-
-
-# if os.path.isfile(Glob.DB_PATH):
-#    print("c'est un fichier")
-#else:
-#    print("la db n'existe pas, créez un fichier kontab.db")
-
-#conn = sqlite3.connect(Glob.DB_PATH)
-db = DB_Management(Glob.DB_PATH)
-conn = db.conn
+conn = sqlite3.connect(Glob.DB_PATH)
 
 def init_db():
     cursor = conn.cursor()
@@ -345,8 +335,6 @@ def parser_compte_manuel():
                     assigner_categorie(id, categ)
 
 def main():
-    print('Welcome in Kontabb')
-
     # Configuration des arguments et mode
     curs = conn.cursor()
     parser = argparse.ArgumentParser()
@@ -477,6 +465,10 @@ def main():
     
     if args.vidertables:
         vider_tables()
+
+
+    print('Welcome:')
+    # print(fichier)
 
     # appels pour test
     #charger_categories()
