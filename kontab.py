@@ -6,7 +6,6 @@ import argparse
 
 # local modules
 from config import Glob
-from utils import get_table_list, delete_table, delete_all_tables, show_table, clean_table, clean_all_tables
 from model.model import Category, Operation
 
 class DB_Management:
@@ -42,10 +41,43 @@ class DB_Management:
             print(req)
             self.cursor.execute(req)
         
-            
-        
+    def get_table_list(self):
+        _SQL = """SELECT name FROM sqlite_master
+        WHERE type='table'
+        ORDER BY name"""
+        self.cursor.execute(_SQL)
+        results = cursor.fetchall()
+        table_list = [
+            v[0] for v in results
+            if v[0] != "sqlite_sequence"
+        ]
+        print("voici toutes les tables:", table_list)
+        return table_list
+    
+    def clean_table(self, table):
+        self.cursor.execute("DELETE FROM " +table+"")
+        print ("table ", table, "vidée")
+    
+    def clean_all_tables(self):
+        table_list = self.get_table_list()
+        for table in table_list:
+            self.clean_table(table)
 
+    def show_table(self, table):
+        self.cursor.execute("SELECT * from "+table+"")
+        for line in cursor.fetchall():
+            print(line)
 
+    def delete_table(self, table):
+        # suppression de la table
+        self.cursor.execute("DROP TABLE " +table+"")
+        print ("table ", table, "supprimée")
+
+    def delete_all_tables(self):
+        table_list = self.get_table_list()
+        for table in table_list:
+            self.delete_table(table)
+        print('Tables supprimées')
 
 
 # if os.path.isfile(Glob.DB_PATH):
@@ -61,44 +93,11 @@ cursor = db.cursor
 def init_db():
     #cursor = conn.cursor()
     #cursor = curs
-    delete_all_tables(cursor)
+    db.delete_all_tables()
     db.createTables(Glob.dicoT)
 
-
-    #Creation de la table categories
-    # cursor.execute("""
-    # CREATE TABLE IF NOT EXISTS categories(
-    #     id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
-    #     nom TEXT,
-    #     categ_parent TEXT
-    # )
-    # """)
-
-    #Creation table cerveau
-    # cursor.execute("""
-    # CREATE TABLE IF NOT EXISTS cerveau(
-    #     id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
-    #     libelle TEXT,
-    #     categorie TEXT
-    # )
-    # """)
-
-    #Creation de la table compte
-    # cursor.execute("""
-    # CREATE TABLE IF NOT EXISTS comptes(
-    #     id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
-    #     date_operation TEXT,
-    #     date_valeur TEXT,
-    #     libelle TEXT,
-    #     montant_credit FLOAT,
-    #     montant_debit FLOAT,
-    #     categorie TEXT
-    # )
-    # """)
-
-
     conn.commit()
-    get_table_list(cursor)
+    db.get_table_list()
     print('Tables crées')
 
 def remplir_donnees_test():
@@ -139,13 +138,12 @@ def remplir_donnees_test():
     INSERT INTO cerveau (libelle, categorie) VALUES(?, ?)
     """, ("LAURENCE F. VINCENNES", "coiffeur"))
 
-    get_table_list(cursor)
+    db.get_table_list()
     conn.commit()
     print("Table cerveau initialisée")
 
 def vider_tables():
-    clean_all_tables(cursor)
-
+    db.clean_all_tables()
     conn.commit()
     print('Tables vidées')
     
@@ -169,7 +167,7 @@ def charger_comptes(fichier):
 
     print('on va afficher a nouveau la db')
     conn.commit()
-    show_table(cursor,'comptes')
+    db.show_table('comptes')
 
 def charger_categories(fichier):
     file = open(fichier,'r')
@@ -182,7 +180,7 @@ def charger_categories(fichier):
     print('on va afficher a nouveau les categories')
     conn.commit()
     #liste_categories()
-    show_table(cursor,'categories')
+    db.show_table('categories')
 
 def charger_cerveau(fichier):
     #cursor = conn.cursor()
@@ -198,8 +196,7 @@ def charger_cerveau(fichier):
         )
     print('on va afficher a nouveau le cerveau')
     conn.commit()
-    show_table(cursor,'cerveau')
-
+    db.show_table('cerveau')
 
 def sauvegarder_categories(fichier):
     # file = open('kontabapp/bckp_categories.csv', 'w')
@@ -309,7 +306,7 @@ def is_a_category(categ):
 def assigner_categorie(id, categorie):
     #cursor = conn.cursor()
     cursor.execute("""
-    UPDATE comptes SET categorie = ? WHERE id = ?
+    UPDATE comptes SET categorie = ? WHERE id_compt = ?
     """, (categorie, id)
     )
     conn.commit()
@@ -350,18 +347,27 @@ def parser_compte_manuel():
     SELECT * from comptes
     """)
     for ecriture in cursor.fetchall():
+        date_operation = ecriture[1]
         libelle = ecriture[3]
+        montant_credit = ecriture[4]
+        montant_debit = ecriture[5]
         id = ecriture[0]
         categorie = ecriture[6]
         if categorie == None:
-            print(libelle)
-            choix = input('souhaitez-vous définir une catégorie pour cette ligne de compte? (y/n)')
+            print('Date:', date_operation, 'libéllé:', libelle, 'montant crédit:', montant_credit, 'montant débit:', montant_debit)
+            choix = input('souhaitez-vous définir une catégorie pour cette ligne de compte? (y/n ou q pour quitter)')
             if choix=='y':
                 print('ok on va affecter une categorie')
                 categ = input('ok, entrez une categorie parmi les categories existante: ')
-                if is_a_category(categ):
-                    assigner_categorie(id, categ)
-
+                #if is_a_category(categ):
+                #    assigner_categorie(id, categ)
+                while not is_a_category(categ):
+                    print('not a category try again!')
+                    categ = input('ok, entrez une categorie parmi les categories existante: ')
+                assigner_categorie(id, categ)
+            elif choix=='q':
+                break
+        
 def fullauto_parser():
     print('## Full automatic mode ##')
     
@@ -378,7 +384,6 @@ def fullauto_parser():
 
     print('## 4. Backup the parsed data ##')
     sauvegarder_comptes(Glob.OUTPUT_STATEMENT_FILE)
-
 
 def main():
     print('Welcome in Kontabb')
@@ -485,13 +490,13 @@ def main():
         init_db()
     
     if args.showcomptes:
-        show_table(curs, 'comptes')
+        db.show_table('comptes')
     
     if args.showcategories:
-        show_table(curs, 'categories')
+        db.show_table('categories')
     
     if args.showcerveau:
-        show_table(curs, 'cerveau')
+        db.show_table('cerveau')
     
     if args.loadcategories:
         charger_categories(Glob.INPUT_CATEGORY_FILE)
