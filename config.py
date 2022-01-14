@@ -1,13 +1,14 @@
 # coding: utf-8
 
-print("import du module config")
+# for testing purposes only - should be deleted
+# print("import du module config")
 
 class Glob:
     DB_PATH='kontab.db'
     INPUT_BRAIN_FILE='input_cerveau.csv'
-    INPUT_STATEMENT_FILE='Avril_2021.csv'
+    INPUT_STATEMENT_FILE='data/Dec_2021.csv'
     INPUT_CATEGORY_FILE='categories_mois_N.csv'
-    OUTPUT_STATEMENT_FILE='resultat_comptes_mois_Avril21.csv'
+    OUTPUT_STATEMENT_FILE='resultat_comptes_Nov21.csv'
     OUTPUT_CATEGORY_FILE='backup_catergoy.csv'
     OUTPUT_BRAIN_FILE='backup_brain.csv'
 

@@ -4,6 +4,8 @@ import sqlite3
 import csv
 import argparse
 
+import PySimpleGUI as sg      
+
 # local modules
 from config import Glob
 from model.model import Category, Operation
@@ -528,10 +530,6 @@ def main():
     if args.fullautoparser:
         fullauto_parser()
 
-    # appels pour test
-    #charger_categories()
-    #rechercher_categorie('Animaux')
-    # verifier_categories_cerveau()
     conn.close()
 
 if __name__ == "__main__":
