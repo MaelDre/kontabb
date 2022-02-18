@@ -1,12 +1,12 @@
 #import Tkinter as tk
 import PySimpleGUI as sg
-from config import Glob                        # Part 1 - The import
+from config import Glob
 import kontab as kt
 
 
 # UI
 # Définition des éléments de le fenêtre
-layout = [  [sg.Text("Bienvenue dans Kontab")],     # Part 2 - The Layout
+layout = [  [sg.Text("Bienvenue dans Kontab")],
             # [sg.Input()],
             [sg.Text("La configuration actuelle est la suivante :")],
             [sg.Text("fichier Cerveau des opérations connues :"), sg.Text(Glob.INPUT_BRAIN_FILE)],
@@ -17,10 +17,10 @@ layout = [  [sg.Text("Bienvenue dans Kontab")],     # Part 2 - The Layout
             [sg.Button('Quitter')] ]
 
 # Création de la fenêtre
-window = sg.Window('Kontab - Analyse auto de comptes', layout)      # Part 3 - Window Defintion
+window = sg.Window('Kontab - Analyse auto de comptes', layout)
 
 # Affichage et interaction avec le fenêtre
-# Part 4 - Event loop or Window.read call
+# Event loop or Window.read call
 
 # Boucle d'évènements
 while True:
@@ -28,7 +28,7 @@ while True:
     # End program if user closes window or
     # presses the OK button, Do something with the information gathered
     if event == "Quitter" or event == sg.WIN_CLOSED:
-        print('Bye', values[0], "! Thanks for using Kontab")
+        print('Bye! Thanks for using Kontab')
         break
     if event == "Lancer":
         kt.fullauto_parser()

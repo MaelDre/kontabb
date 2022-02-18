@@ -9,92 +9,13 @@ import PySimpleGUI as sg
 # local modules
 from config import Glob
 from model.model import Category, Operation
+import db_utils
 
-class DB_Management:
-    # Constructeur
-    def __init__(self, path):
-        try:
-            self.conn = sqlite3.connect(path)
-        except Exception:
-            print('Error detected, impossible to connect to the database sorry')
-            self.echec=1
-        else:
-            self.cursor = self.conn.cursor()
-            self.echec=0
-    
-    def createTables(self, dicTables):
-        # On va parcourir les tables du dictable
-        for table in dicTables:
-            req = "CREATE TABLE IF NOT EXISTS %s (" % table
-            pk =''
-            for descr in dicTables[table]:
-                nomChamp = descr[0]     # libellé du champ à créer
-                tch = descr[1]          # type de champ à créer
-                if tch =='f':           # champ FLOAT
-                    typeChamp = 'FLOAT'
-                elif tch =='k':         # champ primary key              
-                    typeChamp = 'INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE'
-                    pk = nomChamp
-                else:                   # champ TEXT
-                    typeChamp = 'TEXT'
-                req = req + nomChamp + ' ' + typeChamp +','
-            req = req[:-1] + ')'
-            # la requete devrait être ok
-            print(req)
-            self.cursor.execute(req)
-        
-    def get_table_list(self):
-        _SQL = """SELECT name FROM sqlite_master
-        WHERE type='table'
-        ORDER BY name"""
-        self.cursor.execute(_SQL)
-        results = cursor.fetchall()
-        table_list = [
-            v[0] for v in results
-            if v[0] != "sqlite_sequence"
-        ]
-        print("voici toutes les tables:", table_list)
-        return table_list
-    
-    def clean_table(self, table):
-        self.cursor.execute("DELETE FROM " +table+"")
-        print ("table ", table, "vidée")
-    
-    def clean_all_tables(self):
-        table_list = self.get_table_list()
-        for table in table_list:
-            self.clean_table(table)
-
-    def show_table(self, table):
-        self.cursor.execute("SELECT * from "+table+"")
-        for line in cursor.fetchall():
-            print(line)
-
-    def delete_table(self, table):
-        # suppression de la table
-        self.cursor.execute("DROP TABLE " +table+"")
-        print ("table ", table, "supprimée")
-
-    def delete_all_tables(self):
-        table_list = self.get_table_list()
-        for table in table_list:
-            self.delete_table(table)
-        print('Tables supprimées')
-
-
-# if os.path.isfile(Glob.DB_PATH):
-#    print("c'est un fichier")
-#else:
-#    print("la db n'existe pas, créez un fichier kontab.db")
-
-#conn = sqlite3.connect(Glob.DB_PATH)
-db = DB_Management(Glob.DB_PATH)
+db = db_utils.DB_Management(Glob.DB_PATH)
 conn = db.conn
 cursor = db.cursor
 
 def init_db():
-    #cursor = conn.cursor()
-    #cursor = curs
     db.delete_all_tables()
     db.createTables(Glob.dicoT)
 
@@ -146,7 +67,6 @@ def remplir_donnees_test():
 
 def vider_tables():
     db.clean_all_tables()
-    conn.commit()
     print('Tables vidées')
     
 def charger_comptes(fichier):
@@ -207,10 +127,7 @@ def sauvegarder_categories(fichier):
     #f_csv.writerow(en_tetes)
     f_csv.writerow( ('Id','Catégorie','Catégorie parent'))
     
-    #cursor = conn.cursor()
-    cursor.execute("""
-    SELECT * from categories
-    """)
+    db.select_table('categories')
     for categ in cursor.fetchall():
         f_csv.writerow(categ)
 
@@ -221,10 +138,7 @@ def sauvegarder_cerveau(fichier):
     #f_csv.writerow(en_tetes)
     f_csv.writerow( ('Id','Libéllés','Catégorie'))
     
-    #cursor = conn.cursor()
-    cursor.execute("""
-    SELECT * from cerveau
-    """)
+    db.select_table('cerveau')
     for souvenir in cursor.fetchall():
         f_csv.writerow(souvenir)
 
@@ -237,10 +151,7 @@ def sauvegarder_comptes(fichier):
     #f_csv.writerow(en_tetes)
     f_csv.writerow( ('Id','Date operation','Date valeur','Libelle','Debit','Credit','Categorie'))
     
-    #cursor = conn.cursor()
-    cursor.execute("""
-    SELECT * from comptes
-    """)
+    db.select_table('comptes')
     for ecriture in cursor.fetchall():
         #print(ecriture)
         f_csv.writerow (ecriture)
